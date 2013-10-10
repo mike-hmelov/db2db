@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Properties;
+import static org.demon.db2db.Configuration.*;
 
 /**
  * @author Mihail Hmelov (demon)
@@ -52,12 +53,12 @@ public class Synchronizer {
 
     boolean parseParameters(Properties properties) {
         boolean fail;
-        fail = checkNotExists(properties, "db1.type");
-        fail |= checkNotExists(properties, "db2.type");
-        fail |= checkNotExists(properties, "db1.class");
-        fail |= checkNotExists(properties, "db2.class");
-        fail |= checkNotExists(properties, "db1.jdbc.url");
-        fail |= checkNotExists(properties, "db2.jdbc.url");
+        fail = checkNotExists(properties, DB1_TYPE);
+        fail |= checkNotExists(properties, DB2_TYPE);
+        fail |= checkNotExists(properties, DB1_CLASS);
+        fail |= checkNotExists(properties, DB2_CLASS);
+        fail |= checkNotExists(properties, DB1_JDBC_URL);
+        fail |= checkNotExists(properties, DB2_JDBC_URL);
         if(!fail)
             configuration = Configuration.fromProperties(properties);
         return !fail;
