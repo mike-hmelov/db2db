@@ -1,5 +1,8 @@
 package org.demon.db2db;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -10,27 +13,39 @@ import java.util.Properties;
  *         Date: 10/9/13
  *         mailto:mike.hmelov@gmail.com"
  */
-public class Application {
+public class Synchronizer {
+    private static final Logger logger = LoggerFactory.getLogger(Synchronizer.class);
 
     public static final String DB2DB_PROPERTIES = "db2db.properties";
 
     private Configuration configuration;
 
     public static void main(String[] args) {
-        Application app = new Application();
-        if (app.parseParameters(readPropertyFile(DB2DB_PROPERTIES)))
+        logger.info("Starting application");
+        Synchronizer app = new Synchronizer();
+        String configName = DB2DB_PROPERTIES;
+        if(args.length == 1)
+            configName = args[0];
+        logger.info("Using {} as configuration file", configName);
+        Properties properties = app.readPropertyFile(configName);
+        if(properties == null)
+            return;
+        if (app.parseParameters(properties))
             return;
         app.doLogic();
     }
 
-    private static Properties readPropertyFile(String fileName) {
-        if (!new File(fileName).exists())
-            throw new RuntimeException("Cannot find configuration file `" + fileName + "`");
+    Properties readPropertyFile(String fileName) {
+        if (!new File(fileName).exists()){
+            logger.error("File `{}` not found", fileName);
+            return null;
+        }
         Properties properties = new Properties();
         try {
             properties.load(new FileInputStream(fileName));
         } catch (IOException e) {
-            throw new RuntimeException("Error reading property file", e);
+            logger.error("Error reading configuration file", e);
+            return null;
         }
         return properties;
     }
@@ -38,8 +53,11 @@ public class Application {
     boolean parseParameters(Properties properties) {
         boolean fail;
         fail = checkNotExists(properties, "db1.type");
-        fail |= checkNotExists(properties, "db1.type");
-        fail |= checkNotExists(properties, "db1.type");
+        fail |= checkNotExists(properties, "db2.type");
+        fail |= checkNotExists(properties, "db1.class");
+        fail |= checkNotExists(properties, "db2.class");
+        fail |= checkNotExists(properties, "db1.jdbc.url");
+        fail |= checkNotExists(properties, "db2.jdbc.url");
         if(!fail)
             configuration = Configuration.fromProperties(properties);
         return !fail;
@@ -48,7 +66,7 @@ public class Application {
     private boolean checkNotExists(Properties properties, String name) {
         boolean flag = !properties.containsKey(name);
         if(flag)
-            System.out.println(String.format("\tMissing parameter `%s`", name));
+            logger.error("Flag with name {} is not found in configuration file", name);
         return flag;
     }
 
