@@ -1,13 +1,9 @@
 package org.demon.db2db;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.util.Properties;
-import static org.demon.db2db.Configuration.*;
+import org.demon.db2db.db.*;
+import org.demon.db2db.gui.Event;
+import org.demon.db2db.gui.EventHandler;
+import org.demon.db2db.gui.GUIFactory;
 
 /**
  * @author Mihail Hmelov (demon)
@@ -15,66 +11,36 @@ import static org.demon.db2db.Configuration.*;
  *         mailto:mike.hmelov@gmail.com"
  */
 public class Synchronizer {
-    private static final Logger logger = LoggerFactory.getLogger(Synchronizer.class);
-
-    public static final String DB2DB_PROPERTIES = "db2db.properties";
 
     private Configuration configuration;
+    private EventHandler eventHandler;
 
-    public static void main(String[] args) {
-        logger.info("Starting application");
-        Synchronizer app = new Synchronizer();
-        String configName = DB2DB_PROPERTIES;
-        if(args.length == 1)
-            configName = args[0];
-        logger.info("Using {} as configuration file", configName);
-        Properties properties = app.readPropertyFile(configName);
-        if(properties == null)
-            return;
-        if (app.parseParameters(properties))
-            return;
-        app.doLogic();
+    public Synchronizer(Configuration configuration) {
+        this.configuration = configuration;
     }
 
-    Properties readPropertyFile(String fileName) {
-        if (!new File(fileName).exists()){
-            logger.error("File `{}` not found", fileName);
-            return null;
+
+    public void doLogic() {
+        registerGUI(GUIFactory.createGUI(this, configuration));
+        if (configuration.showGUI()) {
+            showGUI();
+        } else {
+            doSync();
         }
-        Properties properties = new Properties();
-        try {
-            properties.load(new FileInputStream(fileName));
-        } catch (IOException e) {
-            logger.error("Error reading configuration file", e);
-            return null;
-        }
-        return properties;
     }
 
-    boolean parseParameters(Properties properties) {
-        boolean fail;
-        fail = checkNotExists(properties, DB1_TYPE);
-        fail |= checkNotExists(properties, DB2_TYPE);
-        fail |= checkNotExists(properties, DB1_CLASS);
-        fail |= checkNotExists(properties, DB2_CLASS);
-        fail |= checkNotExists(properties, DB1_JDBC_URL);
-        fail |= checkNotExists(properties, DB2_JDBC_URL);
-        if(!fail)
-            configuration = Configuration.fromProperties(properties);
-        return !fail;
+    private void doSync() {
+        DBConnectionHolder sourceConnectionHolder = DBConnectionManager.createConnection(configuration.getSourceDatabaseType(), configuration.getSourceClass(), configuration.getSourceURL(), configuration.getSourceUserName(), configuration.getSourcePassword());
+        DBConnectionHolder targetConnectionHolder = DBConnectionManager.createConnection(configuration.getSourceDatabaseType(), configuration.getSourceClass(), configuration.getSourceURL(), configuration.getSourceUserName(), configuration.getSourcePassword());
+        if(sourceConnectionHolder == null || targetConnectionHolder == null)
+            return;
     }
 
-    private boolean checkNotExists(Properties properties, String name) {
-        boolean flag = !properties.containsKey(name);
-        if(flag)
-            logger.error("Flag with name {} is not found in configuration file", name);
-        return flag;
+    private void showGUI() {
+        eventHandler.handle(new Event(Event.Type.SHOW));
     }
 
-    private void doLogic() {
-        //TODO load and validate parameters
-        //TODO create 2 connection holders
-        //TODO run sync processor
-        //TODO run data sync
+    private void registerGUI(EventHandler gui) {
+        this.eventHandler = gui;
     }
 }

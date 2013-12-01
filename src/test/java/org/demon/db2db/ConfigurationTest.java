@@ -1,6 +1,6 @@
 package org.demon.db2db;
 
-import org.demon.db2db.db.DatabaseType;
+import org.demon.db2db.db.*;
 import org.junit.Test;
 
 import java.util.Properties;
@@ -28,6 +28,7 @@ public class ConfigurationTest {
         properties.put(Configuration.DB2_USERNAME, "user2");
         properties.put(Configuration.DB1_PASSWORD, "pass1");
         properties.put(Configuration.DB2_PASSWORD, "pass2");
+        properties.put(Configuration.SHOW_GUI, "true");
 
 
         Configuration configuration = Configuration.fromProperties(properties);
@@ -42,6 +43,7 @@ public class ConfigurationTest {
         assertEquals("user2", configuration.getDestinationUserName());
         assertEquals("pass1", configuration.getSourcePassword());
         assertEquals("pass2", configuration.getDestinationPassword());
+        assertEquals(true, configuration.showGUI());
 
         properties.remove(Configuration.DB1_USERNAME);
         properties.remove(Configuration.DB2_USERNAME);
